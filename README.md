@@ -1,313 +1,618 @@
-# MLGuard: Automated Machine Learning Training, Deployment & Monitoring Platform
+# 🛡️ MLGuard — Automated Machine Learning Training, Deployment & Monitoring Platform
 
-[![CI/CD](https://github.com/mlguard/mlguard/actions/workflows/ci.yml/badge.svg)](https://github.com/mlguard/mlguard/actions)
-[![Python](https://img.shields.io/badge/Python-3.11-blue.svg)](https://www.python.org/)
-[![FastAPI](https://img.shields.io/badge/FastAPI-0.110+-009688.svg)](https://fastapi.tiangolo.com)
-[![Scikit-Learn](https://img.shields.io/badge/Scikit--Learn-1.4+-F7931E.svg)](https://scikit-learn.org/)
-[![MLflow](https://img.shields.io/badge/MLflow-2.11+-0194E2.svg)](https://mlflow.org/)
-[![Docker](https://img.shields.io/badge/Docker-Compose-2496ED.svg)](https://www.docker.com/)
+**Production-style MLOps | CI/CD | Model Registry | Real-Time Inference | Statistical Drift Detection**
 
----
-
-## 1. Project Overview & Problem Statement
-
-Production machine learning systems fail in ways traditional software does not. While software code is static, data is dynamic: input feature distributions shift, consumer preferences evolve, and latency degrades under burst load. Most data science prototypes remain confined to Jupyter Notebooks because moving from a local script to an automated, auditable serving pipeline with statistical guardrails is notoriously complex.
-
-**MLGuard** bridges this gap. It is an end-to-end, production-style tabular machine learning platform that automates:
-1. **Schema Validation & Ingestion**: Detecting missing values, constant features, high-cardinality ID columns, and target leakage risks.
-2. **Leakage-Free Preprocessing**: Fitting imputation and categorical one-hot transformers strictly on training splits.
-3. **Multi-Model Training**: Training and cross-validating Linear Models, Random Forests, and Gradient Boosting estimators.
-4. **Experiment Tracking**: Persisting parameters, evaluation metrics, and artifacts via MLflow.
-5. **Immutable Model Registry**: Auditable version control with one-click promotion and automated demotion.
-6. **Low-Latency Inference**: FastAPI serving endpoints returning sub-20ms predictions and class probability distributions.
-7. **Continuous Drift Monitoring**: Real-time two-sample Kolmogorov-Smirnov (KS) and Chi-Square hypothesis testing comparing live traffic against baseline training distributions.
+<p align="center">
+  <a href="https://ais-dev-2fl5gz6vapwjjqugqgj5mu-941486271451.asia-east1.run.app/"><strong>🚀 Live Demo</strong></a>
+  &nbsp; • &nbsp;
+  <a href="./arch.pdf"><strong>🏗️ Architecture PDF</strong></a>
+  &nbsp; • &nbsp;
+  <a href="#-api-endpoint-reference"><strong>📖 API Reference</strong></a>
+</p>
 
 ---
 
-## 2. System Architecture
+## 📌 1. Project Overview
+
+Production machine learning systems face challenges that traditional software systems do not. While application code may remain unchanged, incoming data distributions evolve, user behavior changes, and inference latency can degrade under load.
+
+MLGuard addresses these challenges by providing an end-to-end platform for building, deploying, versioning, serving, and monitoring tabular machine learning models.
+
+The platform integrates data validation, leakage-safe preprocessing, multi-model training, experiment tracking, model registry management, low-latency inference, and statistical drift detection.
+
+### 🎯 Core Capabilities
+
+- **Schema Validation & Ingestion:** Detect missing values, duplicate rows, constant features, ID-like columns, and potential target leakage.
+- **Leakage-Safe Preprocessing:** Fit preprocessing transformations on training data only.
+- **Multi-Model Training:** Train and compare linear models, Random Forests, and Gradient Boosting estimators.
+- **Experiment Tracking:** Record parameters, evaluation metrics, and artifacts using MLflow.
+- **Versioned Model Registry:** Track model versions and manage promotion to the active serving model.
+- **Real-Time Inference:** Serve predictions through FastAPI endpoints.
+- **Continuous Drift Monitoring:** Compare production traffic against reference training distributions using KS and Chi-square statistical tests.
+- **Automated Quality Checks:** Run unit, API, and integration tests through Pytest and CI workflows.
+
+## 🏗️ 2. System Architecture
+
+**Full architecture document:** [View `arch.pdf`](./arch.pdf)
+
+The following diagram illustrates the major components and their relationships.
+
+```mermaid
+flowchart TB
+    A["📂 Dataset Upload"] --> B["🔍 Schema Validation"]
+    B --> C["🧹 Data Preprocessing"]
+    C --> D["🤖 Model Training"]
+    D --> E["📊 Evaluation & Cross-Validation"]
+    E --> F["🧪 MLflow Tracking"]
+    F --> G["🗃️ Versioned Model Registry"]
+    G --> H["🚀 FastAPI Inference Service"]
+    H --> I["🎯 Prediction Response"]
+    H --> J["📡 Request Telemetry"]
+    J --> K["📈 Drift Detection Engine"]
+    K --> L["🚨 Alerts & Monitoring Dashboard"]
+
+    M[("🗄️ SQLite + SQLAlchemy")] <--> G
+    M <--> J
+    N["📊 Streamlit / Plotly Dashboard"] <--> B
+    N <--> E
+    N <--> G
+    N <--> L
+
+    style A fill:#1d3557,color:#fff
+    style D fill:#14532d,color:#fff
+    style G fill:#4c1d95,color:#fff
+    style H fill:#075985,color:#fff
+    style K fill:#7c2d12,color:#fff
+```
+
+### 🔄 End-to-End ML Lifecycle
 
 ```mermaid
 flowchart TD
-    subgraph Data Layer
-        CSV[User CSV / Sample Data] --> Ingestion[Data Validator & Profiler]
-        Ingestion --> Storage[Safe Controlled Storage]
-    end
-
-    subgraph ML Engine
-        Storage --> Split[Train/Test Split & CV]
-        Split --> Preprocess[Scikit-learn ColumnTransformer]
-        Preprocess --> Train[Model Factory: Linear / RF / GBDT]
-        Train --> Eval[Holdout Evaluation: RMSE / MAE / R² / F1]
-        Train --> Artifacts[Serialized Pipeline Artifacts .joblib]
-    end
-
-    subgraph Tracking & Governance
-        Train --> MLflow[MLflow Tracking Server]
-        Eval --> MLflow
-        Artifacts --> Registry[Model Registry: Versions & Validation Status]
-    end
-
-    subgraph Production Serving
-        Registry --> Activate[Model Activation / Serving Promotion]
-        Activate --> FastAPI[FastAPI Inference Engine: /predict]
-        Client[Web Client / REST API] --> FastAPI
-    end
-
-    subgraph Telemetry & Monitoring
-        FastAPI --> Log[Prediction Logger & Latency Percentiles]
-        Log --> Drift[Statistical Drift Engine: Kolmogorov-Smirnov & Chi-Square]
-        Artifacts -. Reference Baseline .-> Drift
-        Drift --> Alerts[Incident Alert Manager: Active / Resolved]
-    end
-
-    subgraph Dashboards
-        FastAPI --> Streamlit[Streamlit Operational Dashboard]
-        FastAPI --> ReactUI[Interactive MLGuard Web Console :3000]
-    end
+    A["Upload CSV Dataset"] --> B["Validate Schema & Data Quality"]
+    B --> C["Split Training and Test Data"]
+    C --> D["Fit Preprocessing on Training Data"]
+    D --> E["Train Multiple Estimators"]
+    E --> F["Evaluate Models"]
+    F --> G["Log Experiments to MLflow"]
+    G --> H["Register Candidate Model"]
+    H --> I{"Approve for Serving?"}
+    I -- Yes --> J["Activate Model Version"]
+    I -- No --> K["Keep Candidate Inactive"]
+    J --> L["Serve Predictions"]
+    L --> M["Collect Telemetry"]
+    M --> N["Monitor Feature Distributions"]
+    N --> O{"Statistically Significant Drift?"}
+    O -- Yes --> P["Create Drift Alert"]
+    O -- No --> M
+    P --> Q["Investigate and Retrain if Needed"]
 ```
 
----
+### 📡 Monitoring and Drift Detection
 
-## 3. Tech Stack
-
-- **Backend Serving**: Python 3.11, FastAPI, Uvicorn, Pydantic v2
-- **ML Pipeline**: Scikit-Learn 1.4+, NumPy, Pandas, SciPy (stats)
-- **Experiment Tracking**: MLflow
-- **Metadata Database**: SQLite + SQLAlchemy ORM
-- **Frontend Dashboards**: Streamlit, Plotly, Vite + React + Tailwind CSS
-- **Testing & Quality**: Pytest, Pytest-Cov, HTTPX, Ruff
-- **Infrastructure**: Docker, Docker Compose, GitHub Actions CI
-
----
-
-## 4. Repository Structure
-
+```mermaid
+flowchart LR
+    A["Reference Training Data"] --> C["Drift Detection Engine"]
+    B["Recent Production Traffic"] --> C
+    C --> D["Numerical Features: KS Test"]
+    C --> E["Categorical Features: Chi-Square"]
+    D --> F["Compare Statistical Results"]
+    E --> F
+    F --> G{"p-value < 0.05?"}
+    G -- Yes --> H["Generate Drift Alert"]
+    G -- No --> I["No Significant Drift Detected"]
+    H --> J["Monitoring Dashboard"]
+    I --> J
 ```
+
+*These diagrams represent the documented architecture and intended workflow. Actual deployment behavior depends on the implementation and configuration in the repository.*
+
+## 🛠️ 3. Technology Stack
+
+| Category | Technologies |
+|---|---|
+| Language | Python 3.11 |
+| Backend API | FastAPI, Uvicorn, Pydantic v2 |
+| Machine Learning | Scikit-learn 1.4+, NumPy, Pandas |
+| Statistical Analysis | SciPy |
+| Experiment Tracking | MLflow |
+| Metadata Storage | SQLite, SQLAlchemy ORM |
+| Dashboard | Streamlit, Plotly |
+| Web UI | Vite, React, Tailwind CSS |
+| Testing | Pytest, Pytest-Cov, HTTPX |
+| Code Quality | Ruff |
+| Containerization | Docker, Docker Compose |
+| CI/CD | GitHub Actions |
+
+## ✨ 4. Key Features
+
+### 📂 Dataset Validation
+- Validate uploaded tabular datasets.
+- Detect missing values and duplicate records.
+- Identify constant and high-cardinality ID-like columns.
+- Flag potential target leakage risks.
+- Generate dataset profiling information.
+
+### ⚙️ Leakage-Safe Preprocessing
+- Use Scikit-learn pipelines and `ColumnTransformer`.
+- Apply numerical imputation and categorical encoding.
+- Fit transformations on training data rather than the complete dataset.
+- Handle unseen categories during inference when configured in the pipeline.
+
+### 🤖 Multi-Model Training
+- Train linear models, Random Forests, and Gradient Boosting estimators.
+- Support regression and classification workflows.
+- Evaluate candidate models using holdout data and cross-validation.
+- Compare metrics before registering models.
+
+### 🧪 Experiment Tracking
+- Track model parameters and evaluation results.
+- Store training artifacts through MLflow.
+- Support experiment comparison and reproducibility.
+
+### 🗃️ Model Registry
+- Maintain identifiable model versions.
+- Track model metrics and validation information.
+- Promote candidate models to the active serving target.
+- Preserve historical versions instead of overwriting registered artifacts.
+
+### 🚀 Real-Time Inference
+- Expose prediction functionality through FastAPI.
+- Return prediction results, model metadata, request identifiers, and latency information where implemented.
+- Support regression predictions and classification probabilities where applicable.
+
+### 📈 Monitoring and Alerts
+- Track request volume and latency percentiles.
+- Compare recent input distributions with baseline data.
+- Generate alerts for statistically significant feature drift.
+- Provide alert status management and monitoring summaries.
+
+## 📊 5. Dashboard and Metrics
+
+The dashboard is designed to provide visibility into model training, registry status, prediction activity, and operational monitoring.
+
+| Dashboard Area | Information |
+|---|---|
+| Dataset Explorer | Dataset structure, feature profiles, validation findings |
+| Training | Training jobs, evaluation results, model comparisons |
+| Experiments | MLflow experiment runs and artifacts |
+| Model Registry | Model versions, metrics, active model |
+| Predictions | Inference requests and response information |
+| Monitoring | Latency percentiles, drift results, alerts |
+
+### Example Monitoring Flow
+
+```text
+Prediction Request
+       │
+       ▼
+ FastAPI Inference
+       │
+       ├──► Model Prediction
+       │
+       └──► Request Telemetry
+                  │
+                  ▼
+          Statistical Checks
+                  │
+                  ▼
+          Drift / Latency Alerts
+                  │
+                  ▼
+          Monitoring Dashboard
+```
+
+Use actual application output when publishing numerical performance claims. For example, a reported latency value is meaningful only alongside the workload, hardware, and measurement conditions.
+
+## 🗂️ 6. Repository Structure
+
+```text
 mlguard/
 ├── app/
 │   ├── api/
-│   │   ├── main.py                  # FastAPI app entry point & CORS
-│   │   ├── dependencies.py          # Service dependency injection
+│   │   ├── main.py
+│   │   ├── dependencies.py
 │   │   └── routes/
-│   │       ├── health.py            # /health & /ready probes
-│   │       ├── datasets.py          # /datasets upload & schema inspect
-│   │       ├── training.py          # /training/jobs execution & status
-│   │       ├── experiments.py       # /experiments queries
-│   │       ├── models.py            # /models registry & activation
-│   │       ├── predictions.py       # /predict inference endpoint
-│   │       └── monitoring.py        # /monitoring/drift, summary, alerts
+│   │       ├── health.py
+│   │       ├── datasets.py
+│   │       ├── training.py
+│   │       ├── experiments.py
+│   │       ├── models.py
+│   │       ├── predictions.py
+│   │       └── monitoring.py
 │   ├── core/
-│   │   ├── config.py                # Pydantic Settings
-│   │   ├── logging_config.py        # JSON structured logging
-│   │   └── exceptions.py            # Domain exceptions
-│   ├── schemas/                     # Typed request/response models
-│   ├── services/                    # Business logic services
+│   │   ├── config.py
+│   │   ├── logging_config.py
+│   │   └── exceptions.py
+│   ├── schemas/
+│   ├── services/
 │   ├── ml/
-│   │   ├── data_validation.py       # Data integrity & leakage checks
-│   │   ├── preprocessing.py         # ColumnTransformer builder
-│   │   ├── model_factory.py         # Estimators factory
-│   │   ├── evaluation.py            # Holdout metrics & best model picker
-│   │   ├── training.py              # Training pipeline orchestrator
-│   │   └── drift_detection.py       # KS & Chi-square statistical tests
-│   ├── db/                          # SQLAlchemy database engine & tables
-│   ├── dashboard/                   # Multi-page Streamlit dashboard
-│   └── utils/                       # Hashing & safe file utilities
+│   │   ├── data_validation.py
+│   │   ├── preprocessing.py
+│   │   ├── model_factory.py
+│   │   ├── evaluation.py
+│   │   ├── training.py
+│   │   └── drift_detection.py
+│   ├── db/
+│   ├── dashboard/
+│   └── utils/
 ├── data/
-│   └── sample/                      # Sample housing & churn CSVs
+│   └── sample/
 ├── scripts/
-│   ├── generate_sample_data.py      # Synthetic offline data generator
-│   └── seed_demo.py                 # Full 1-click end-to-end demo runner
+│   ├── generate_sample_data.py
+│   └── seed_demo.py
 ├── tests/
-│   ├── unit/                        # Unit tests for validation, ML & drift
-│   ├── api/                         # FastAPI TestClient endpoint tests
-│   └── integration/                 # E2E pipeline integration tests
-├── .github/workflows/ci.yml         # GitHub Actions CI matrix
-├── Dockerfile                       # Multi-stage production container
-├── docker-compose.yml               # Local multi-service orchestration
-├── requirements.txt                 # Pinned dependencies
-├── pyproject.toml                   # Project metadata & Ruff config
-├── Makefile                         # Developer commands
+│   ├── unit/
+│   ├── api/
+│   └── integration/
+├── .github/
+│   └── workflows/
+│       └── ci.yml
+├── Dockerfile
+├── docker-compose.yml
+├── requirements.txt
+├── pyproject.toml
+├── Makefile
+├── arch.pdf
 └── README.md
 ```
 
----
+*This tree reflects the documented project layout; verify that each listed file exists in the current repository.*
 
-## 5. Local Setup & Quickstart
+## 🚀 7. Local Setup & Quickstart
 
 ### Prerequisites
+
 - Python 3.10 or 3.11
-- pip, virtualenv
+- Git
+- pip and virtual environment support
+- Docker and Docker Compose (optional)
 
-### 1. Installation
+### Step 1: Clone the Repository
+
+Replace the example URL with your actual GitHub repository URL if it differs.
+
 ```bash
-# Clone the repository
-git clone https://github.com/mlguard/mlguard.git
+git clone https://github.com/udaykumar09072006/mlguard.git
 cd mlguard
+```
 
-# Create and activate virtual environment
+### Step 2: Create a Virtual Environment
+
+**macOS / Linux**
+
+```bash
 python3 -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
+source venv/bin/activate
+```
 
-# Install dependencies
+**Windows**
+
+```powershell
+python -m venv venv
+venv\Scripts\activate
+```
+
+### Step 3: Install Dependencies
+
+```bash
+python -m pip install --upgrade pip
 pip install -r requirements.txt
 ```
 
-### 2. Generate Demo Data & Seed Workflows
-Run the offline seeding script to create sample datasets, train models, log to MLflow, and simulate production traffic:
+### Step 4: Seed the Demo
+
+If the repository includes the documented seeding script, run:
+
 ```bash
 python scripts/seed_demo.py
 ```
 
-### 3. Start Backend API
+This is intended to generate sample workflows, train models, record experiments, and simulate prediction activity.
+
+### Step 5: Start the API
+
 ```bash
 uvicorn app.api.main:app --host 0.0.0.0 --port 8000 --reload
 ```
-Interactive API documentation will be available at: **`http://localhost:8000/docs`**
 
-### 4. Start Streamlit Dashboard
-In a new terminal window:
+Open the interactive API documentation:
+
+- Swagger UI: `http://localhost:8000/docs`
+- ReDoc: `http://localhost:8000/redoc`
+
+### Step 6: Start the Dashboard
+
+In a separate terminal with the virtual environment activated:
+
 ```bash
 streamlit run app/dashboard/Home.py --server.port 8501
 ```
-Dashboard available at: **`http://localhost:8501`**
 
----
+Dashboard: `http://localhost:8501`
 
-## 6. Docker & Docker Compose Setup
+*Run the commands from the repository root and adjust entry-point paths if the actual files differ.*
 
-Run the entire platform (FastAPI, Streamlit, and MLflow) with a single command:
+## 🐳 8. Docker & Docker Compose
+
+If the repository contains the documented Docker configuration, build and start the services using:
+
 ```bash
-docker-compose up --build -d
-```
-Service URLs:
-- **FastAPI Documentation**: `http://localhost:8000/docs`
-- **Streamlit Dashboard**: `http://localhost:8501`
-- **MLflow Tracking UI**: `http://localhost:5000`
-
-To tear down services:
-```bash
-docker-compose down
+docker compose up --build -d
 ```
 
----
+Expected local service URLs, subject to the configured port mappings:
 
-## 7. API Endpoint Reference
+| Service | URL |
+|---|---|
+| FastAPI Swagger UI | `http://localhost:8000/docs` |
+| Streamlit Dashboard | `http://localhost:8501` |
+| MLflow Tracking UI | `http://localhost:5000` |
 
-### Health & Readiness
-- `GET /health` → Returns `{"status": "healthy", "service": "MLGuard"}`
-- `GET /ready` → Verifies database connection and disk storage mounts.
+Stop the services:
+
+```bash
+docker compose down
+```
+
+## 🔌 9. API Endpoint Reference
+
+The following endpoints reflect the documented API design. Confirm their exact paths against the running application or Swagger UI.
+
+### Health and Readiness
+
+| Method | Endpoint | Purpose |
+|---|---|---|
+| GET | `/health` | Check API health |
+| GET | `/ready` | Check service readiness |
 
 ### Dataset Ingestion
-- `POST /api/v1/datasets/upload` (multipart/form-data)
-  - Validates row/col counts, duplicate rows, missingness, and leakage.
-- `GET /api/v1/datasets` → Lists registered datasets.
-- `GET /api/v1/datasets/{dataset_id}` → Returns complete column profiling summary.
 
-### Training Jobs
-- `POST /api/v1/training/jobs`
-  ```json
-  {
-    "dataset_id": "ds_housing_prices",
-    "target_column": "sale_price",
-    "task_type": "regression",
-    "models": ["gradient_boosting", "random_forest", "linear_regression"],
-    "test_size": 0.2,
-    "cv_folds": 3,
-    "random_state": 42
-  }
-  ```
-- `GET /api/v1/training/jobs/{job_id}` → Returns training status and holdout scores.
+| Method | Endpoint | Purpose |
+|---|---|---|
+| POST | `/api/v1/datasets/upload` | Upload and validate a dataset |
+| GET | `/api/v1/datasets` | List registered datasets |
+| GET | `/api/v1/datasets/{dataset_id}` | Retrieve dataset profiling information |
 
-### Model Registry & Serving
-- `GET /api/v1/models` → Lists model versions, metrics, and validation flags.
-- `GET /api/v1/models/active` → Returns currently deployed serving model.
-- `POST /api/v1/models/{model_id}/activate` → Promotes candidate model to production.
+### Training and Experiments
 
-### Real-Time Inference
-- `POST /api/v1/predict`
-  ```json
-  {
-    "features": [
-      {
-        "square_feet": 2400,
-        "bedrooms": 3,
-        "bathrooms": 2.5,
-        "year_built": 2005,
-        "neighborhood": "Downtown",
-        "property_type": "Single Family",
-        "garage_spaces": 2
-      }
-    ]
-  }
-  ```
-  **Response:**
-  ```json
-  {
-    "request_id": "req_8fa19b02",
-    "model_id": "mod_gradient_boosting_run_1a",
-    "model_version": 1,
-    "task_type": "regression",
-    "predictions": [{"prediction": 535000.0, "probabilities": null}],
-    "latency_ms": 11.4,
-    "timestamp": "2026-10-12T03:30:00Z"
-  }
-  ```
+| Method | Endpoint | Purpose |
+|---|---|---|
+| POST | `/api/v1/training/jobs` | Start a training job |
+| GET | `/api/v1/training/jobs/{job_id}` | Retrieve job status and scores |
+| GET | `/api/v1/experiments` | Query tracked experiments |
 
-### Monitoring & Drift Detection
-- `GET /api/v1/monitoring/summary` → Returns total requests, avg latency, p50, p95, p99 latency.
-- `GET /api/v1/monitoring/drift` → Runs Kolmogorov-Smirnov test and reports p-values.
-- `GET /api/v1/monitoring/alerts` → Returns active and resolved drift/latency alerts.
-- `POST /api/v1/monitoring/alerts/{alert_id}/status?new_status=RESOLVED` → Resolves alert.
+### Model Registry and Inference
 
----
+| Method | Endpoint | Purpose |
+|---|---|---|
+| GET | `/api/v1/models` | List registered model versions |
+| GET | `/api/v1/models/active` | Retrieve the active model |
+| POST | `/api/v1/models/{model_id}/activate` | Activate a candidate model |
+| POST | `/api/v1/predict` | Generate predictions |
 
-## 8. Monitoring & Statistical Drift Methodology
+### Monitoring
 
-### Numerical Features: Two-Sample Kolmogorov-Smirnov Test
-For each continuous numerical feature $X$, MLGuard compares the empirical cumulative distribution function (ECDF) of the baseline training set $F_{ref}(x)$ against the ECDF of recent production inference traffic $F_{prod}(x)$:
+| Method | Endpoint | Purpose |
+|---|---|---|
+| GET | `/api/v1/monitoring/summary` | Retrieve request and latency statistics |
+| GET | `/api/v1/monitoring/drift` | Inspect statistical drift results |
+| GET | `/api/v1/monitoring/alerts` | List monitoring alerts |
+| POST | `/api/v1/monitoring/alerts/{alert_id}/status` | Update alert status |
 
-$$D = \sup_{x} |F_{ref}(x) - F_{prod}(x)|$$
+### Example Training Request
 
-The null hypothesis $H_0$ states that both samples are drawn from the same continuous distribution. If the computed $p$-value falls below the configured threshold ($\alpha = 0.05$), the null hypothesis is rejected, and a `DATA_DRIFT` alert is triggered.
+```json
+{
+  "dataset_id": "ds_housing_prices",
+  "target_column": "sale_price",
+  "task_type": "regression",
+  "models": [
+    "gradient_boosting",
+    "random_forest",
+    "linear_regression"
+  ],
+  "test_size": 0.2,
+  "cv_folds": 3,
+  "random_state": 42
+}
+```
 
-**Documented Limitation:** With very large sample sizes ($N > 100,000$), the KS test becomes sensitive to infinitesimal distribution shifts that carry negligible practical business impact. MLGuard handles this with a sliding evaluation window of recent requests.
+### Example Prediction Request
 
-### Categorical Features: Chi-Square Goodness-of-Fit & Total Variation Distance
-For categorical features with expected counts $\ge 5$, MLGuard evaluates the Chi-Square statistic:
+```json
+{
+  "features": [
+    {
+      "square_feet": 2400,
+      "bedrooms": 3,
+      "bathrooms": 2.5,
+      "year_built": 2005,
+      "neighborhood": "Downtown",
+      "property_type": "Single Family",
+      "garage_spaces": 2
+    }
+  ]
+}
+```
 
-$$\chi^2 = \sum \frac{(O_i - E_i)^2}{E_i}$$
+### Example Prediction Response
 
-When sample sizes are small or zero cells exist, the system falls back to Total Variation Distance ($TVD = \frac{1}{2} \sum |p_i - q_i|$).
+```json
+{
+  "request_id": "req_example",
+  "model_id": "mod_gradient_boosting_run_1a",
+  "model_version": 1,
+  "task_type": "regression",
+  "predictions": [
+    {
+      "prediction": 535000.0,
+      "probabilities": null
+    }
+  ],
+  "latency_ms": 11.4,
+  "timestamp": "2026-10-12T03:30:00Z"
+}
+```
 
-### Important Note: Data Drift vs. Model Performance Degradation
-Data drift indicates that the input feature distribution has shifted ($P(X_{prod}) \neq P(X_{train})$). **Drift does not necessarily mean prediction error has increased.** Prediction accuracy can only be confirmed once actual ground-truth labels are observed. MLGuard provides a delayed ground-truth endpoint (`/monitoring/ground-truth`) to separate input drift from realized degradation.
+*The JSON above illustrates the documented request/response format. The identifiers, prediction, and latency are examples, not guaranteed live results.*
 
----
+## 📐 10. Statistical Drift Detection
 
-## 9. Automated Testing & Verification
+MLGuard distinguishes changes in incoming feature distributions from actual degradation in model quality.
+
+### Numerical Features — Two-Sample Kolmogorov–Smirnov Test
+
+For a numerical feature, compare the empirical cumulative distribution functions of the reference and recent production samples:
+
+\[
+D = \sup_x \left|F_{\mathrm{ref}}(x)-F_{\mathrm{prod}}(x)\right|
+\]
+
+Where:
+
+- \(F_{\mathrm{ref}}(x)\) represents the reference training distribution.
+- \(F_{\mathrm{prod}}(x)\) represents the recent production distribution.
+- \(D\) measures the maximum difference between the two empirical distributions.
+
+The null hypothesis \(H_0\) states that both samples are drawn from the same continuous distribution.
+
+With a configured significance threshold of \(\alpha=0.05\), a p-value below the threshold provides statistical evidence against the null hypothesis and may trigger a drift alert.
+
+**Limitation:** With very large sample sizes, the test can flag small distribution differences that may not have practical business significance. Windowing, effect-size analysis, and domain-specific thresholds can help with interpretation.
+
+### Categorical Features — Chi-Square Test
+
+For categorical features with appropriate expected frequencies, the Chi-square statistic is:
+
+\[
+\chi^2 = \sum_i \frac{(O_i-E_i)^2}{E_i}
+\]
+
+Where:
+
+- \(O_i\) is the observed category count.
+- \(E_i\) is the expected category count under the reference distribution.
+
+Small expected counts can invalidate standard approximations. Sparse or unseen categories need careful handling; alternative distance measures, such as Total Variation Distance, can supplement the analysis.
+
+\[
+\mathrm{TVD}(P,Q)=\frac{1}{2}\sum_i |p_i-q_i|
+\]
+
+### Data Drift vs. Model Performance Degradation
+
+Data drift means the distribution of incoming features has changed:
+
+\[
+P(X_{\mathrm{prod}})\ne P(X_{\mathrm{train}})
+\]
+
+This does not automatically prove that model accuracy has decreased. Realized performance degradation requires ground-truth labels and appropriate evaluation metrics.
+
+A delayed-label evaluation workflow can compare predictions with subsequently observed outcomes where the application supports it.
+
+## 🧪 11. Automated Testing & Quality
 
 Run the test suite with coverage:
+
 ```bash
 pytest tests/ -v --cov=app
 ```
 
-### Verified Test Suite
-- `tests/unit/test_validation.py`: Verifies row/col limits, duplicate detection, ID column detection, and target type validations.
-- `tests/unit/test_preprocessing.py`: Verifies `ColumnTransformer` isolation, median imputation, and unseen category safety.
-- `tests/unit/test_training.py`: Tests regression and classification pipeline fitting and artifact serialization.
-- `tests/unit/test_evaluation.py`: Verifies MAE, RMSE, R², Accuracy, Precision, Recall, F1, and ROC-AUC calculations.
-- `tests/unit/test_drift.py`: Verifies KS two-sample test on identical vs. shifted distributions.
-- `tests/api/test_api_endpoints.py`: Integration tests for `/health`, `/ready`, `/datasets/upload`, and `/predict`.
-- `tests/integration/test_pipeline_e2e.py`: Complete lifecycle test (Upload → Train → Register → Predict → Telemetry).
+The documented test categories include:
+
+| Test Area | Intended Coverage |
+|---|---|
+| Data Validation | Row/column limits, duplicate detection, ID-like columns |
+| Preprocessing | Train/test isolation, imputation, unseen categories |
+| Training | Regression/classification pipeline fitting |
+| Evaluation | Regression and classification metrics |
+| Drift Detection | Identical and shifted distributions |
+| API Tests | Health, readiness, dataset upload, prediction |
+| Integration Tests | Dataset ingestion through training and inference |
+
+### CI/CD Workflow
+
+```mermaid
+flowchart LR
+    A["Code Push / Pull Request"] --> B["GitHub Actions"]
+    B --> C["Install Dependencies"]
+    C --> D["Ruff Checks"]
+    D --> E["Pytest"]
+    E --> F{"Checks Passed?"}
+    F -- Yes --> G["Build / Validate Container"]
+    F -- No --> H["Report Failure"]
+    G --> I["Deployment Step if Configured"]
+```
+
+The diagram illustrates a typical CI pipeline. Actual job steps and deployment automation depend on `.github/workflows/ci.yml`.
+
+## 🔐 12. Reliability and Design Principles
+
+- **Leakage prevention:** Fit transformations only on training partitions or training folds.
+- **Versioned artifacts:** Preserve registered model versions and track activation changes.
+- **Input validation:** Validate request schemas and uploaded data before processing.
+- **Observability:** Record request and latency metrics where implemented.
+- **Graceful degradation:** Cached model artifacts can support resilience only when explicitly implemented and tested.
+- **Reproducibility:** Track random seeds, model parameters, evaluation metrics, and relevant artifacts.
+
+## 🎤 13. Interview-Ready Project Explanation
+
+### 30-Second Pitch
+
+> MLGuard is an end-to-end MLOps platform built with Python, FastAPI, Scikit-learn, MLflow, and Streamlit. It validates tabular datasets, prevents preprocessing leakage, trains and evaluates multiple models, tracks experiments, and manages model versions. Its inference API serves predictions while a monitoring engine compares production feature distributions with training baselines using statistical drift tests. The project demonstrates how to connect model development, serving, version management, and monitoring in one workflow.
+
+### Core Concepts to Explain
+
+**1. Data leakage prevention**
+
+Preprocessing transformations must be fitted using training data only. The resulting transformations are then applied to validation/test data and production inputs. This prevents information from evaluation data leaking into training.
+
+**2. Model versioning**
+
+Keep identifiable versions of trained artifacts and associate each with its metrics and metadata. Activation should change the serving target without silently overwriting historical versions.
+
+**3. Statistical drift detection**
+
+Compare reference and recent feature distributions. A statistically significant shift is a monitoring signal, not proof that model predictions are inaccurate.
+
+**4. Latency monitoring**
+
+Measure inference request latency and summarize its distribution using percentiles such as p50, p95, and p99. Benchmark claims should specify the environment and workload.
+
+## 🔮 14. Future Improvements
+
+- Automated retraining workflows with approval gates.
+- Ground-truth ingestion and delayed model-quality evaluation.
+- Authentication and role-based access control.
+- More robust model promotion and rollback policies.
+- Production-grade logging, metrics, and alert integrations.
+- Load testing and reproducible latency benchmarks.
+- Expanded CI/CD deployment automation.
+
+## 🏗️ 15. Architecture Documentation
+
+The standalone architecture PDF is available in the repository:
+
+**[📄 View MLGuard Architecture Diagram](./arch.pdf)**
+
+To show an image directly inside the GitHub README, export the diagram as a PNG, upload it as `arch.png` in the repository root, and use:
+
+```markdown
+![MLGuard Architecture](./arch.png)
+```
+
+GitHub renders supported Mermaid diagrams directly in Markdown, so the diagrams in this README should appear visually when Mermaid rendering is available.
 
 ---
 
-## 10. Fresher & Interview Architecture Explanation
+## 👨‍💻 About
 
-### 30-Second Interview Pitch:
-> "MLGuard is a production-style MLOps platform built with FastAPI, Scikit-learn, and Streamlit. It solves the issue of silent model degradation in production. The system validates uploaded CSV schemas to prevent target leakage, trains multiple algorithms using scikit-learn pipelines with strict train/test separation, logs experiment metrics and artifacts to MLflow, and stores versioned models in an immutable registry. Deployed models serve real-time predictions with sub-20ms latency while our monitoring engine continuously runs two-sample Kolmogorov-Smirnov hypothesis tests against training baselines to trigger alerts the moment data drift occurs."
+MLGuard is an automated tabular machine learning platform focused on training, experiment tracking, versioned model management, FastAPI inference, and statistical drift monitoring.
 
-### Core Architectural Concepts:
-1. **Data Leakage Prevention**: Transformers (scalers, imputers, encoders) are fit strictly on training folds ($X_{train}$) and only transform test folds ($X_{test}$) and production inference records.
-2. **Immutable Model Registry**: We never overwrite existing model binaries. We assign semantic versions (v1, v2) and update a database pointer to switch the active serving target.
-3. **Graceful Degraded Mode**: If MLflow or the database experiences downtime, the inference engine continues serving predictions using cached local pipeline artifacts.
+**Built with Python, FastAPI, Scikit-learn, MLflow, Docker, and modern testing practices.**
+
+<p align="center">
+  <strong>MLGuard — From Data to Deployment to Monitoring.</strong>
+</p>
