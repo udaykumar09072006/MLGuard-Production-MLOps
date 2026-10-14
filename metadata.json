@@ -1,0 +1,6 @@
+{
+  "name": "MLGuard — ML Training & Monitoring Platform",
+  "description": "Production-style automated machine learning training, model registry, inference serving, and data drift monitoring platform.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

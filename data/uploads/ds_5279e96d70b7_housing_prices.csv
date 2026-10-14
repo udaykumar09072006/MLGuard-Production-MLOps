@@ -1,0 +1,61 @@
+square_feet,bedrooms,bathrooms,year_built,neighborhood,property_type,garage_spaces,sale_price
+2150,3,2.0,1995,Downtown,Single Family,2.0,465000
+1650,2,1.5,1980,Suburbs,Condo,1.0,240000
+3100,4,3.0,2010,Lakeside,Single Family,3.0,680000
+1420,2,1.0,1975,Suburbs,Townhouse,1.0,210000
+2450,4,2.5,2005,Uptown,Single Family,2.0,520000
+1850,3,2.0,1990,Suburbs,Single Family,2.0,335000
+3400,5,3.5,2018,Downtown,Single Family,3.0,780000
+1250,2,1.0,1968,Suburbs,Condo,0.0,185000
+2750,4,3.0,2002,Lakeside,Single Family,2.0,610000
+1950,3,2.0,1998,Uptown,Townhouse,2.0,410000
+2200,3,2.5,2006,Downtown,Condo,1.0,490000
+1720,3,1.5,1985,Suburbs,Single Family,1.0,295000
+3650,5,4.0,2021,Lakeside,Single Family,3.0,850000
+1550,2,2.0,1992,Downtown,Condo,1.0,375000
+2900,4,3.0,2012,Uptown,Single Family,2.0,595000
+2050,3,2.0,2000,Suburbs,Single Family,2.0,360000
+1380,2,1.0,1972,Suburbs,Townhouse,1.0,205000
+3250,4,3.5,2015,Downtown,Single Family,2.0,730000
+2300,3,2.5,2004,Lakeside,Townhouse,2.0,515000
+1680,3,1.5,1988,Suburbs,Single Family,1.0,285000
+2850,4,3.0,2011,Uptown,Single Family,2.0,575000
+1900,3,2.0,1994,Downtown,Condo,1.0,430000
+1480,2,1.5,1978,Suburbs,Condo,1.0,225000
+3800,5,4.0,2022,Lakeside,Single Family,3.0,890000
+2100,3,2.0,2001,Suburbs,Single Family,2.0,370000
+2600,4,2.5,2008,Downtown,Townhouse,2.0,580000
+1750,3,2.0,1991,Uptown,Condo,1.0,350000
+3150,4,3.5,2016,Lakeside,Single Family,3.0,710000
+1300,2,1.0,1965,Suburbs,Condo,0.0,175000
+2400,3,2.5,2005,Uptown,Single Family,2.0,495000
+2000,3,2.0,1997,Suburbs,Single Family,2.0,345000
+3500,5,3.5,2019,Downtown,Single Family,3.0,810000
+1600,2,1.5,1982,Suburbs,Townhouse,1.0,235000
+2950,4,3.0,2013,Lakeside,Single Family,2.0,645000
+1800,3,2.0,1993,Downtown,Condo,1.0,405000
+2250,3,2.5,2007,Uptown,Single Family,2.0,480000
+1500,2,1.5,1980,Suburbs,Condo,1.0,215000
+3350,4,3.5,2017,Downtown,Single Family,2.0,760000
+2700,4,2.5,2009,Lakeside,Townhouse,2.0,590000
+1920,3,2.0,1996,Suburbs,Single Family,2.0,340000
+3050,4,3.0,2014,Uptown,Single Family,2.0,625000
+1450,2,1.0,1976,Suburbs,Condo,1.0,210000
+2550,4,2.5,2007,Downtown,Single Family,2.0,570000
+1880,3,2.0,1995,Uptown,Townhouse,1.0,385000
+3700,5,4.0,2020,Lakeside,Single Family,3.0,865000
+2180,3,2.0,2003,Suburbs,Single Family,2.0,380000
+1620,2,1.5,1984,Downtown,Condo,1.0,360000
+2800,4,3.0,2010,Lakeside,Single Family,2.0,620000
+1350,2,1.0,1970,Suburbs,Townhouse,1.0,195000
+3200,4,3.5,2016,Downtown,Single Family,3.0,740000
+2420,3,2.5,2006,Uptown,Single Family,2.0,510000
+1780,3,2.0,1992,Suburbs,Single Family,2.0,320000
+2980,4,3.0,2014,Lakeside,Single Family,2.0,660000
+1520,2,1.5,1981,Suburbs,Condo,1.0,220000
+3600,5,3.5,2021,Downtown,Single Family,3.0,835000
+2080,3,2.0,1999,Uptown,Townhouse,2.0,435000
+1820,3,2.0,1994,Suburbs,Single Family,1.0,330000
+2650,4,2.5,2008,Lakeside,Single Family,2.0,580000
+1400,2,1.0,1974,Suburbs,Condo,0.0,200000
+3300,4,3.5,2018,Downtown,Single Family,2.0,750000

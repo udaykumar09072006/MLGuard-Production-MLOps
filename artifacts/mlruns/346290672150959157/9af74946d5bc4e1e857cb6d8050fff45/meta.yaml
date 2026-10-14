@@ -1,0 +1,15 @@
+artifact_uri: file:///app/applet/artifacts/mlruns/346290672150959157/9af74946d5bc4e1e857cb6d8050fff45/artifacts
+end_time: 1791802512998
+entry_point_name: ''
+experiment_id: '346290672150959157'
+lifecycle_stage: active
+run_id: 9af74946d5bc4e1e857cb6d8050fff45
+run_name: gradient_boosting_run_a9d072ee4be1
+run_uuid: 9af74946d5bc4e1e857cb6d8050fff45
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1791802512938
+status: 3
+tags: []
+user_id: root

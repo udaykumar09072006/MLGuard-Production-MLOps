@@ -1,0 +1,60 @@
+version: '3.8'
+
+services:
+  # FastAPI Serving & Orchestration Backend
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: uvicorn app.api.main:app --host 0.0.0.0 --port 8000 --reload
+    ports:
+      - "8000:8000"
+    environment:
+      - ENVIRONMENT=development
+      - LOG_LEVEL=INFO
+      - DATA_STORAGE_DIR=/app/data/uploads
+      - MODEL_STORAGE_DIR=/app/artifacts/models
+      - REFERENCE_DATA_DIR=/app/artifacts/reference
+      - DATABASE_URL=sqlite:////app/artifacts/mlguard.db
+      - MLFLOW_TRACKING_URI=sqlite:////app/artifacts/mlflow.db
+    volumes:
+      - ./data:/app/data
+      - ./artifacts:/app/artifacts
+      - ./app:/app/app
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+
+  # Streamlit Operational Dashboard
+  dashboard:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: streamlit run app/dashboard/Home.py --server.port 8501 --server.address 0.0.0.0
+    ports:
+      - "8501:8501"
+    environment:
+      - API_BASE_URL=http://api:8000
+    depends_on:
+      api:
+        condition: service_healthy
+    volumes:
+      - ./app/dashboard:/app/dashboard
+      - ./artifacts:/app/artifacts
+
+  # MLflow Tracking Server UI
+  mlflow:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: mlflow server --backend-store-uri sqlite:////app/artifacts/mlflow.db --default-artifact-root /app/artifacts/mlflow_artifacts --host 0.0.0.0 --port 5000
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./artifacts:/app/artifacts
+
+volumes:
+  mlguard_data:
+  mlguard_artifacts:

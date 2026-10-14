@@ -1,0 +1,47 @@
+[project]
+name = "mlguard"
+version = "1.0.0"
+description = "Production-Style Automated Machine Learning Training, Deployment, and Monitoring Platform"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "fastapi>=0.110.0",
+    "uvicorn[standard]>=0.28.0",
+    "pydantic>=2.6.4",
+    "pydantic-settings>=2.2.1",
+    "pandas>=2.2.0",
+    "numpy>=1.26.0",
+    "scikit-learn>=1.4.0",
+    "scipy>=1.12.0",
+    "mlflow>=2.11.0",
+    "sqlalchemy>=2.0.28",
+    "httpx>=0.27.0",
+    "python-multipart>=0.0.9",
+    "joblib>=1.3.2"
+]
+
+[project.optional-dependencies]
+dashboard = [
+    "streamlit>=1.32.0",
+    "plotly>=5.19.0"
+]
+dev = [
+    "pytest>=8.1.0",
+    "pytest-cov>=4.1.0",
+    "ruff>=0.3.0"
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "W"]
+ignore = ["E501"]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_functions = ["test_*"]
+addopts = "-v --tb=short"
